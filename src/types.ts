@@ -1,6 +1,9 @@
-export interface TetrominoBlocks {
-  ids: string[],
+export interface Tetromino {
+  ids: TetrominoBlock,
   color: string
 }
 
-export type Movements = 'right' | 'left' | 'down' | 'up'
+export type TetrominoBlock = string[]
+
+export type Movement = 'right' | 'left' | 'down' | 'up'
+
