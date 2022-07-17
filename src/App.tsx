@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { Tetrominos, Movement, InactiveTetrominoBlock } from './types'
-import { moveTetromino, collisionDetected, generateTetromino, bottomReached, clearLine } from './utils'
+import { Tetrominos, Movement } from './types'
+import { rotateTetromino, moveTetromino, collisionDetected, generateTetromino, bottomReached, clearLine } from './utils'
 import './App.css';
 
 function App() {
   const [tetrominos, setTetrominos] = useState<Tetrominos>({
-    active: { ids: ['z0'], color: 'green'},
+    active: { ids: ['z0'], type: 'I', color: 'green', rotated: 0},
     inactive: [{ id: 'z0', color: 'green'}]
   })
 
@@ -38,7 +38,7 @@ function App() {
           }
         }
         return {
-          active: {ids: moveTetromino(prev.active.ids, 'down'), color: prev.active.color },
+          active: {ids: moveTetromino(prev.active.ids, 'down'), color: prev.active.color, type: prev.active.type, rotated: prev.active.rotated },
           inactive: [...prev.inactive]
         }
       })
@@ -51,7 +51,15 @@ function App() {
       if ((!key.includes('up') && key.includes('arrow')) || collisionDetected(tetrominos.active.ids, direction as Movement)) {
         setTetrominos(prev => {
           return {
-            active: { ids: moveTetromino(prev.active.ids, direction as Movement), color: prev.active.color },
+            active: {ids: moveTetromino(prev.active.ids, direction as Movement), color: prev.active.color, type: prev.active.type, rotated: prev.active.rotated },
+            inactive: [...prev.inactive]
+          }
+        })
+      }
+      if ((key.includes('up') && key.includes('arrow'))) {
+        setTetrominos(prev => {
+          return {
+            active: rotateTetromino(prev.active),
             inactive: [...prev.inactive]
           }
         })

@@ -1,4 +1,4 @@
-import { Movement, Tetromino, Tetrominos, InactiveTetrominoBlock } from './types'
+import { Movement, Tetromino, Tetrominos, InactiveTetrominoBlock, TetrominoType, RotationCount } from './types'
 
 const randomNumber = (min: number, max: number) => { 
   return Math.floor(Math.random() * (max - min) + min);
@@ -67,34 +67,85 @@ export const collisionDetected = (ids: string[], attemptedMovement: Movement): b
   })
 }
 
-export const generateTetromino = (): Tetromino => {
-  const tetrominoTypes = 'IJLOSTZ'
-  const colors = ['cyan', 'blue', 'orange', 'yellow', 'green', 'purple', 'red']
-  const randomType = tetrominoTypes[randomNumber(0, tetrominoTypes.length - 1)]
-  const startingPoint = 'A4'
+const movementsFromType: { [key: string]: Movement[] } = {
+  'I': ['left', 'left', 'left'],
+  'J': ['left', 'down', 'down'],
+  'L': ['right', 'down', 'down'],
+  'O': ['right', 'down', 'left'],
+  'S': ['left', 'down', 'left'],
+  'T': ['down', 'right', 'left', 'left'],
+  'Z': ['right', 'down', 'right'],
+}
 
-  const movementsForTypes: { [key: string]: Movement[] } = {
-    'I': ['down', 'down', 'down'],
-    'J': ['left', 'down', 'down'],
-    'L': ['right', 'down', 'down'],
-    'O': ['right', 'down', 'left'],
-    'S': ['left', 'down', 'left'],
-    'T': ['down', 'right', 'left', 'left'],
-    'Z': ['right', 'down', 'right'],
-  }
-
-  const generateFromType = (type: string) => {
-    const ids: string[] = [startingPoint]
-    const movements = movementsForTypes[type]
-    for (let i = 0; i <= movements.length - 1; i++){
-      ids.push(moveBlock(ids[i], movements[i]))
+const rotateMovements = (movements: Movement[], rotated: 0 | 1 | 2 | 3) => {
+    if (rotated === 0) return movements
+    const rotatedMovements: { [key: number]: {[key: string]: Movement} } = {
+      1: {
+        left: 'down',
+        right: 'up',
+        down: 'left',
+        up: 'right'
+      },
+      2: {
+        left: 'right',
+        right: 'left',
+        down: 'up',
+        up: 'down'
+      },
+      3: {
+        left: 'down',
+        right: 'up',
+        down: 'right',
+        up: 'left'
+      }
     }
-    return [...new Set(ids)] // delete duplicates
+    return movements.map((movement: Movement) => rotatedMovements[rotated][movement])
+}
+
+const generateFromMovements = (movements: Movement[], startingPoint: string = 'A4') => {
+  const ids: string[] = [startingPoint]
+  for (let i = 0; i <= movements.length - 1; i++){
+    ids.push(moveBlock(ids[i], movements[i]))
   }
+  return [...new Set(ids)] // delete duplicates
+}
+
+export const rotateTetromino = (tetromino: Tetromino): Tetromino => {
+  const rotated: RotationCount = (tetromino.rotated < 3 ? tetromino.rotated + 1 : 0) as RotationCount 
+
+  const startingPointFromType : { [key: string]: string} = {
+    'I': tetromino.ids[2],
+    'J': tetromino.ids[0],
+    'L': tetromino.ids[0],
+    'O': tetromino.ids[0],
+    'S': tetromino.ids[0],
+    'T': tetromino.ids[0],
+    'Z': tetromino.ids[0],
+  }
+
+  const rotatedMovements = rotateMovements(movementsFromType[tetromino.type], rotated)
 
   return {
-    ids:  generateFromType(randomType),
-    color: colors[randomNumber(0, colors.length - 1)]
+    ids:  generateFromMovements(rotatedMovements, startingPointFromType[tetromino.type]),
+    color: tetromino.color,
+    type: tetromino.type,
+    rotated: rotated
+  }
+}
+
+export const generateTetromino = (): Tetromino => {
+  const tetrominoTypes: TetrominoType[] = ['I','J','L','O','S','T','Z']
+  const colors = ['cyan', 'blue', 'orange', 'yellow', 'green', 'purple', 'red']
+  const randomType: TetrominoType = tetrominoTypes[randomNumber(0, tetrominoTypes.length - 1)]
+  // const movements = movementsFromType[randomType]
+  const movements = movementsFromType['T']
+
+  return {
+    ids:  generateFromMovements(movements),
+    color: colors[randomNumber(0, colors.length - 1)],
+    // type: randomType,
+    type: 'T',
+    rotated: 0 
   }
 }
 

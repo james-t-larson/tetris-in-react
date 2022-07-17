@@ -4,7 +4,9 @@ export interface Tetrominos {
 
 export interface Tetromino {
   ids: TetrominoBlock,
-  color: string
+  color: string,
+  type: TetrominoType,
+  rotated: 0 | 1 | 2 | 3
 }
 
 export interface InactiveTetrominoBlock {
@@ -14,7 +16,9 @@ export interface InactiveTetrominoBlock {
 
 export type TetrominoBlock = string[]
 
+export type TetrominoType = 'I' | 'J' | 'L' | 'O' | 'S' | 'T' | 'Z'
+
 export type Movement = 'right' | 'left' | 'down' | 'up'
 
-
+export type RotationCount = 0 | 1 | 2 | 3
 
