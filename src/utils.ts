@@ -111,16 +111,17 @@ const generateFromMovements = (movements: Movement[], startingPoint: string = 'A
 }
 
 export const rotateTetromino = (tetromino: Tetromino): Tetromino => {
+  if (tetromino.type === 'O') return tetromino
   const rotated: RotationCount = (tetromino.rotated < 3 ? tetromino.rotated + 1 : 0) as RotationCount 
 
   const startingPointFromType : { [key: string]: string} = {
     'I': tetromino.ids[2],
-    'J': tetromino.ids[0],
-    'L': tetromino.ids[0],
+    'J': tetromino.ids[2],
+    'L': tetromino.ids[2],
     'O': tetromino.ids[0],
-    'S': tetromino.ids[0],
+    'S': tetromino.ids[2],
     'T': tetromino.ids[0],
-    'Z': tetromino.ids[0],
+    'Z': tetromino.ids[2],
   }
 
   const rotatedMovements = rotateMovements(movementsFromType[tetromino.type], rotated)
@@ -137,14 +138,12 @@ export const generateTetromino = (): Tetromino => {
   const tetrominoTypes: TetrominoType[] = ['I','J','L','O','S','T','Z']
   const colors = ['cyan', 'blue', 'orange', 'yellow', 'green', 'purple', 'red']
   const randomType: TetrominoType = tetrominoTypes[randomNumber(0, tetrominoTypes.length - 1)]
-  // const movements = movementsFromType[randomType]
-  const movements = movementsFromType['T']
+  const movements = movementsFromType[randomType]
 
   return {
     ids:  generateFromMovements(movements),
     color: colors[randomNumber(0, colors.length - 1)],
-    // type: randomType,
-    type: 'T',
+    type: randomType,
     rotated: 0 
   }
 }
