@@ -20,19 +20,19 @@ export const moveBlock = ([row, column]: string, direction: Movement): string =>
 }
 
 export const moveTetromino = (ids: string[], direction: Movement): string[] => {
-  if (collisionDetected(ids, direction), direction) return ids;
+  if (collisionDetected(ids, direction)) return ids;
    return ids.map(id => moveBlock(id, direction))
 }
 
 export const bottomReached = (ids: string[]): boolean => {
-  return  ids.some(([row, column]) => {
+  return  ids.some(([row]) => {
     return row === 'T'
   })
 }
 
 export const collisionDetected = (ids: string[], attemptedMovement: Movement): boolean => {
-  const possibleCollision = [...ids].map(id => moveBlock(id, attemptedMovement))
-  return possibleCollision.some(id => {
+  const positionAfterMovement = [...ids].map(id => moveBlock(id, attemptedMovement))
+  return positionAfterMovement.some(id => {
     return id.includes('U') || id.includes('10') || id.includes('-1')
   })
 }
