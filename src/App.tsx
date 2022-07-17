@@ -1,12 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { Tetromino, Movement } from './types'
-import { moveTetromino, collisionDetected, generateTetromino, bottomReached} from './utils'
+import { Tetrominos, Movement, InactiveTetrominoBlock } from './types'
+import { moveTetromino, collisionDetected, generateTetromino, bottomReached, clearLine } from './utils'
 import './App.css';
 
 function App() {
-  const [activeTetrominoBlocks, setActiveTetrominoBlocks] = useState<Tetromino>({ ids: ['z0'], color: 'green'})
-  // once an active tetromino hits something then all its blocks become inactive
-  const [inactiveTetrominoBlocks, setInactiveTetrominoBlocks] = useState<Tetromino>()
+  const [tetrominos, setTetrominos] = useState<Tetrominos>({
+    active: { ids: ['z0'], color: 'green'},
+    inactive: [{ id: 'z0', color: 'green'}]
+  })
 
   const grid = useMemo(() => {
     const row = [[],[],[],[],[],[],[],[],[],[]];
@@ -20,15 +21,26 @@ function App() {
       })
     })
     return grid
-  }, [inactiveTetrominoBlocks])
+  }, [])
 
   useEffect(() => {
     setInterval(() => {
-      setActiveTetrominoBlocks(prev => {
-        if (bottomReached(prev.ids) || prev.ids[0] === 'z0') {
-           return generateTetromino()
+      setTetrominos(prev => {
+        if (bottomReached(prev, 'down') || prev.active.ids[0] === 'z0') {
+          const inactiveTetrominoBlocks = [...prev.active.ids].map(id => ({
+            id: id,
+            color: prev.active.color
+          })).concat(prev.inactive)
+          
+          return {
+            active: generateTetromino(),
+            inactive: clearLine(inactiveTetrominoBlocks)
+          }
         }
-        return { ids: moveTetromino(prev.ids, 'down'), color: prev.color }
+        return {
+          active: {ids: moveTetromino(prev.active.ids, 'down'), color: prev.active.color },
+          inactive: [...prev.inactive]
+        }
       })
     }, 500);
   }, [])
@@ -36,11 +48,14 @@ function App() {
   const playerInputHandler = (event: React.KeyboardEvent<HTMLSpanElement>) => {
     const key = event.key.toLowerCase();
     const direction = key.replace('arrow', '')
-    if ((!key.includes('up') && key.includes('arrow')) || collisionDetected(activeTetrominoBlocks.ids, direction as Movement)) {
-      setActiveTetrominoBlocks(prev => {
-        return { ids: moveTetromino(prev.ids, direction as Movement), color: prev.color }
-      })
-    }
+      if ((!key.includes('up') && key.includes('arrow')) || collisionDetected(tetrominos.active.ids, direction as Movement)) {
+        setTetrominos(prev => {
+          return {
+            active: { ids: moveTetromino(prev.active.ids, direction as Movement), color: prev.active.color },
+            inactive: [...prev.inactive]
+          }
+        })
+      }
   }
 
   return (
@@ -48,13 +63,21 @@ function App() {
       <div>
       {grid.map((row, index) => <div id={String.fromCharCode(index + 65)} className="row">{
         row.map(block => {
-          return <div id={block.id} className={`block ${
-            !!activeTetrominoBlocks?.ids?.includes(block.id) ? `${activeTetrominoBlocks.color} active-block` : ''
-          } ${block.color}`}></div>
+          return <div id={block.id} className={
+             `block 
+              ${!!tetrominos.active.ids.includes(block.id) ? `${tetrominos.active.color} active-block` : ''}
+              ${(() => {
+                const foundBlock = tetrominos.inactive.find(tetroBlocks => tetroBlocks.id === block.id)
+                  return !!foundBlock?.color ? `${foundBlock?.color} active-block` : ''
+              })()}
+              ${block.color}
+              `
+            }>
+          </div>
         })
       }</div>)}
       </div>
-    </span>
+      </span>
   );
 }
 
