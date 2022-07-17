@@ -77,7 +77,7 @@ const movementsFromType: { [key: string]: Movement[] } = {
   'Z': ['right', 'down', 'right'],
 }
 
-const rotateMovements = (movements: Movement[], rotated: 0 | 1 | 2 | 3) => {
+const rotateMovements = (movements: Movement[], rotated: RotationCount) => {
     if (rotated === 0) return movements
     const rotatedMovements: { [key: number]: {[key: string]: Movement} } = {
       1: {
