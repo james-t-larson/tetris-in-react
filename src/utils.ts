@@ -51,7 +51,7 @@ export const checkMovementForCollision = (tetrominos: Tetrominos, futurePosition
   const inactiveIds = [...tetrominos.inactive].map(block => block.id)
   return futurePosition.some(id => {
     const boundaries = ['10', '-1', 'U', 'z']
-    return inactiveIds.includes(id) && boundaries.some(b => id.includes(b))
+    return inactiveIds.includes(id) || boundaries.some(b => id.includes(b))
   })
 }
 
@@ -90,7 +90,7 @@ const rotateMovements = (movements: Movement[], rotated: RotationCount) => {
     return movements.map((movement: Movement) => rotatedMovements[rotated][movement])
 }
 
-const generateFromMovements = (movements: Movement[], startingPoint: string = 'A8') => {
+const generateFromMovements = (movements: Movement[], startingPoint: string = 'A4') => {
   const ids: string[] = [startingPoint]
   for (let i = 0; i <= movements.length - 1; i++){
     ids.push(moveBlock(ids[i], movements[i]))

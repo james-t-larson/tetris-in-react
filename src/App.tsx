@@ -4,7 +4,7 @@ import { rotateTetromino,
   moveTetromino,
   checkMovementForCollision,
   generateTetromino,
-  clearLine 
+  clearLine
 } from './utils'
 import './App.css';
 
@@ -13,6 +13,7 @@ function App() {
     active: { ids: ['z0'], type: 'I', color: 'green', rotated: 0},
     inactive: [{ id: 'z0', color: 'green'}]
   })
+
 
   const grid = useMemo(() => {
     const row = [[],[],[],[],[],[],[],[],[],[]];
@@ -31,19 +32,24 @@ function App() {
   useEffect(() => {
     setInterval(() => {
       setTetrominos(prev => {
-        if (checkMovementForCollision(tetrominos, moveTetromino(prev.active.ids, 'down')) || prev.active.ids[0] === 'z0') {
+        if (checkMovementForCollision(prev , moveTetromino(prev.active.ids, 'down')) || prev.active.ids[0] === 'z0') {
           const inactiveTetrominoBlocks = [...prev.active.ids].map(id => ({
             id: id,
             color: prev.active.color
           })).concat(prev.inactive)
-          
+
           return {
             active: generateTetromino(),
             inactive: clearLine(inactiveTetrominoBlocks)
           }
         }
         return {
-          active: {ids: moveTetromino(prev.active.ids, 'down'), color: prev.active.color, type: prev.active.type, rotated: prev.active.rotated },
+          active: {
+            ids: moveTetromino(prev.active.ids, 'down'),
+            color: prev.active.color,
+            type: prev.active.type,
+            rotated: prev.active.rotated
+          },
           inactive: [...prev.inactive]
         }
       })
@@ -51,29 +57,30 @@ function App() {
   }, [])
 
   const playerInputHandler = (event: React.KeyboardEvent<HTMLSpanElement>) => {
-    const key = event.key.toLowerCase();
-    const direction = key.replace('arrow', '')
-      if ((!key.includes('up') && key.includes('arrow')) && !checkMovementForCollision(tetrominos, moveTetromino(tetrominos.active.ids, direction as Movement))) {
-        setTetrominos(prev => {
-          return {
-            active: {
-              ids: moveTetromino(prev.active.ids, direction as Movement),
-              color: prev.active.color,
-              type: prev.active.type,
-              rotated: prev.active.rotated 
-            },
-            inactive: [...prev.inactive]
-          }
-        })
+    const key = event.key.toLowerCase().replace('arrow', '');
+    const direction = key as Movement
+    setTetrominos(prev => {
+      const movementCollision = checkMovementForCollision(prev, moveTetromino(prev.active.ids, direction))
+      const rotationCollision = checkMovementForCollision(prev, rotateTetromino(prev.active).ids)
+      if (key === 'up' && !rotationCollision) {
+        return {
+          active: rotateTetromino(prev.active),
+          inactive: [...prev.inactive]
+        }
       }
-      if ((key.includes('up') && key.includes('arrow')) && !checkMovementForCollision(tetrominos, rotateTetromino(tetrominos.active).ids)) {
-        setTetrominos(prev => {
-          return {
-            active: rotateTetromino(prev.active),
-            inactive: [...prev.inactive]
-          }
-        })
+      if (['right', 'left', 'down'].includes(key) && !movementCollision) {
+        return {
+          active: {
+            ids: moveTetromino(prev.active.ids, direction as Movement),
+            color: prev.active.color,
+            type: prev.active.type,
+            rotated: prev.active.rotated 
+          },
+          inactive: [...prev.inactive]
+        }
       }
+      return prev
+    })
   }
 
   return (
