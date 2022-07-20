@@ -1,6 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { Tetrominos, Movement } from './types'
-import { rotateTetromino, moveTetromino, collisionDetected, generateTetromino, bottomReached, clearLine } from './utils'
+import { rotateTetromino,
+  moveTetromino,
+  checkMovementForCollision,
+  generateTetromino,
+  clearLine 
+} from './utils'
 import './App.css';
 
 function App() {
@@ -26,7 +31,7 @@ function App() {
   useEffect(() => {
     setInterval(() => {
       setTetrominos(prev => {
-        if (bottomReached(prev, 'down') || prev.active.ids[0] === 'z0') {
+        if (checkMovementForCollision(tetrominos, moveTetromino(prev.active.ids, 'down')) || prev.active.ids[0] === 'z0') {
           const inactiveTetrominoBlocks = [...prev.active.ids].map(id => ({
             id: id,
             color: prev.active.color
@@ -48,15 +53,20 @@ function App() {
   const playerInputHandler = (event: React.KeyboardEvent<HTMLSpanElement>) => {
     const key = event.key.toLowerCase();
     const direction = key.replace('arrow', '')
-      if ((!key.includes('up') && key.includes('arrow')) || collisionDetected(tetrominos.active.ids, direction as Movement)) {
+      if ((!key.includes('up') && key.includes('arrow')) && !checkMovementForCollision(tetrominos, moveTetromino(tetrominos.active.ids, direction as Movement))) {
         setTetrominos(prev => {
           return {
-            active: {ids: moveTetromino(prev.active.ids, direction as Movement), color: prev.active.color, type: prev.active.type, rotated: prev.active.rotated },
+            active: {
+              ids: moveTetromino(prev.active.ids, direction as Movement),
+              color: prev.active.color,
+              type: prev.active.type,
+              rotated: prev.active.rotated 
+            },
             inactive: [...prev.inactive]
           }
         })
       }
-      if ((key.includes('up') && key.includes('arrow'))) {
+      if ((key.includes('up') && key.includes('arrow')) && !checkMovementForCollision(tetrominos, rotateTetromino(tetrominos.active).ids)) {
         setTetrominos(prev => {
           return {
             active: rotateTetromino(prev.active),
@@ -76,7 +86,7 @@ function App() {
               ${!!tetrominos.active.ids.includes(block.id) ? `${tetrominos.active.color} active-block` : ''}
               ${(() => {
                 const foundBlock = tetrominos.inactive.find(tetroBlocks => tetroBlocks.id === block.id)
-                  return !!foundBlock?.color ? `${foundBlock?.color} active-block` : ''
+                return !!foundBlock?.color ? `${foundBlock?.color} active-block` : ''
               })()}
               ${block.color}
               `
@@ -85,7 +95,7 @@ function App() {
         })
       }</div>)}
       </div>
-      </span>
+    </span>
   );
 }
 

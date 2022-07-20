@@ -20,7 +20,6 @@ export const moveBlock = ([row, column]: string, direction: Movement): string =>
 }
 
 export const moveTetromino = (ids: string[], direction: Movement): string[] => {
-  if (collisionDetected(ids, direction)) return ids;
    return ids.map(id => moveBlock(id, direction))
 }
 
@@ -48,22 +47,11 @@ export const clearLine = (blocks: InactiveTetrominoBlock[]): InactiveTetrominoBl
   return Object.values(count).some(v => v > 9) ? movedBlocks : blocks
 }
 
-export const bottomReached = (tetrominos: Tetrominos, attemptedMovement: Movement): boolean => {
-  const positionAfterMovement = [...tetrominos.active.ids].map(id => moveBlock(id, attemptedMovement))
+export const checkMovementForCollision = (tetrominos: Tetrominos, futurePosition: string[]): boolean => {
   const inactiveIds = [...tetrominos.inactive].map(block => block.id)
-  const blockCollisionFound = positionAfterMovement.some(id => {
-    return inactiveIds.includes(id)
-  })
-  const atBottomRow = tetrominos.active.ids.some(([row]) => {
-    return row === 'T'
-  })
-  return blockCollisionFound || atBottomRow
-}
-
-export const collisionDetected = (ids: string[], attemptedMovement: Movement): boolean => {
-  const positionAfterMovement = [...ids].map(id => moveBlock(id, attemptedMovement))
-  return positionAfterMovement.some(id => {
-    return id.includes('U') || id.includes('10') || id.includes('-1')
+  return futurePosition.some(id => {
+    const boundaries = ['10', '-1', 'U', 'z']
+    return inactiveIds.includes(id) && boundaries.some(b => id.includes(b))
   })
 }
 
@@ -102,7 +90,7 @@ const rotateMovements = (movements: Movement[], rotated: RotationCount) => {
     return movements.map((movement: Movement) => rotatedMovements[rotated][movement])
 }
 
-const generateFromMovements = (movements: Movement[], startingPoint: string = 'A4') => {
+const generateFromMovements = (movements: Movement[], startingPoint: string = 'A8') => {
   const ids: string[] = [startingPoint]
   for (let i = 0; i <= movements.length - 1; i++){
     ids.push(moveBlock(ids[i], movements[i]))
