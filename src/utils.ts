@@ -4,47 +4,56 @@ const randomNumber = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min) + min);
 } 
 
-export const moveBlock = ([row, column]: string, direction: Movement): string => {
-  switch (direction) {
-    case 'up':
-          return String.fromCharCode(row.charCodeAt(0) - 1) + column
-    case 'down':
-          return String.fromCharCode(row.charCodeAt(0) + 1) + column
-    case 'right':
-          return row + (Number(column) + 1)
-    case 'left':
-          return row + (Number(column) - 1)
-    default:
-      return 'z0'
+export const moveBlock = ([row, column]: string, direction: Movement, movementCount: number = 1): string => {
+  const directions = {
+    'up': String.fromCharCode(row.charCodeAt(0) - movementCount) + column,
+    'down': String.fromCharCode(row.charCodeAt(0) + movementCount) + column,
+    'right': row + (Number(column) + movementCount),
+    'left': row + (Number(column) - movementCount)
   }
+
+  return directions[direction]
 }
 
 export const moveTetromino = (ids: string[], direction: Movement): string[] => {
    return ids.map(id => moveBlock(id, direction))
 }
 
-export const moveInactiveBlocks = (blocks: InactiveTetrominoBlock[]): InactiveTetrominoBlock[] => {
-  return blocks.map(block => ({
-    id: moveBlock(block.id, 'down'),
-    color: block.color
-  }))
+export const moveInactiveBlocks = (blocks: InactiveTetrominoBlock[], completeRows: TetrominoType[]): InactiveTetrominoBlock[] => {
+  const completeRowsAsInts = completeRows.map(row => row.charCodeAt(0))
+  return blocks.map(({ id, color })=> {
+      if (completeRowsAsInts.includes(id[0].charCodeAt(0) + 1)) {
+        return {
+          id: moveBlock(id, 'down'),
+          color: color
+        }
+      } else {
+        return {
+          id: id,
+          color: color
+        }
+      }
+  })
 }
 
 export const clearLine = (blocks: InactiveTetrominoBlock[]): InactiveTetrominoBlock[] => {
-  let count: {[key: string]: number} = {}
-
+  let rowCounts: {[key: string]: number} = {}
   blocks.forEach(block => {
     const row = block.id[0]
-      if (count[row]) {
-        count[row] += 1
+      if (rowCounts[row]) {
+        rowCounts[row] += 1
       } else {
-        count[row] = 1
+        rowCounts[row] = 1
       }
   })
 
-  const filteredBlocks = blocks.filter(block => count[block.id[0]] < 9)
-  const movedBlocks = moveInactiveBlocks(filteredBlocks)
-  return Object.values(count).some(v => v > 9) ? movedBlocks : blocks
+  const filteredBlocks = blocks.filter(block => rowCounts[block.id[0]] < 10)
+  const filledRows: TetrominoType[] = Object.entries(rowCounts).filter(([key,value]) => {
+    return value > 9
+  }).map(row => row[0] as TetrominoType)
+
+  const movedBlocks = moveInactiveBlocks(filteredBlocks, filledRows)
+  return Object.values(rowCounts).some(v => v > 9) ? movedBlocks : blocks
 }
 
 export const checkMovementForCollision = (tetrominos: Tetrominos, futurePosition: string[]): boolean => {
