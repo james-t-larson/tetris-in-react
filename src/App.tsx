@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { Tetrominos, Movement } from './types'
 import { rotateTetromino,
   moveTetromino,
@@ -7,13 +7,19 @@ import { rotateTetromino,
   clearLine
 } from './utils'
 import './App.css';
+import Lockr from 'lockr'
 
 function App() {
-  const [tetrominos, setTetrominos] = useState<Tetrominos>({
-    active: { ids: ['z0'], type: 'I', color: 'green', rotated: 0},
-    inactive: [{ id: 'z0', color: 'green'}]
-  })
 
+  const initialState: Tetrominos = (
+    {
+      active: { ids: ['z0'], type: 'I', color: 'green', rotated: 0},
+      inactive: [{ id: 'z0', color: 'green'}]
+    }
+  )
+
+  const [tetrominos, setTetrominos] = useState<Tetrominos>(initialState)
+  const playing = useRef(false)
 
   const grid = useMemo(() => {
     const row = [[],[],[],[],[],[],[],[],[],[]];
@@ -30,31 +36,32 @@ function App() {
   }, [])
 
   useEffect(() => {
-    setInterval(() => {
-      setTetrominos(prev => {
-        if (checkMovementForCollision(prev , moveTetromino(prev.active.ids, 'down')) || prev.active.ids[0] === 'z0') {
-          const inactiveTetrominoBlocks = [...prev.active.ids].map(id => ({
-            id: id,
-            color: prev.active.color
-          })).concat(prev.inactive)
-
-          return {
-            active: generateTetromino(),
-            inactive: clearLine(inactiveTetrominoBlocks)
+      let loop = setInterval(() => {
+        if (!playing.current) return null
+        setTetrominos(prev => {
+          if (checkMovementForCollision(prev , moveTetromino(prev.active.ids, 'down')) || prev.active.ids[0] === 'z0') {
+            const inactiveTetrominoBlocks = [...prev.active.ids].map(id => ({
+              id: id,
+              color: prev.active.color
+            })).concat(prev.inactive)
+            return {
+              active: generateTetromino(),
+              inactive: clearLine(inactiveTetrominoBlocks)
+            }
           }
-        }
-        return {
-          active: {
-            ids: moveTetromino(prev.active.ids, 'down'),
-            color: prev.active.color,
-            type: prev.active.type,
-            rotated: prev.active.rotated
-          },
-          inactive: [...prev.inactive]
-        }
-      })
-    }, 500);
-  }, [])
+          return {
+            active: {
+              ids: moveTetromino(prev.active.ids, 'down'),
+              color: prev.active.color,
+              type: prev.active.type,
+              rotated: prev.active.rotated
+            },
+            inactive: [...prev.inactive]
+          }
+        })
+      }, 500)
+    return () => clearTimeout(loop)
+  }, [playing])
 
   const playerInputHandler = (event: React.KeyboardEvent<HTMLSpanElement>) => {
     const key = event.key.toLowerCase().replace('arrow', '');
@@ -89,7 +96,8 @@ function App() {
       {grid.map((row, index) => <div id={String.fromCharCode(index + 65)} className="row">{
         row.map(block => {
           return <div id={block.id} className={
-             `block 
+             `
+              block
               ${!!tetrominos.active.ids.includes(block.id) ? `${tetrominos.active.color} active-block` : ''}
               ${(() => {
                 const foundBlock = tetrominos.inactive.find(tetroBlocks => tetroBlocks.id === block.id)
@@ -102,6 +110,8 @@ function App() {
         })
       }</div>)}
       </div>
+      <button onClick={(() => { playing.current = !playing.current; setTetrominos(initialState) })}>{playing.current ? 'Stop' : 'Start'}</button>
+      <button onClick={(() => setTetrominos(initialState))}>Restart</button>
     </span>
   );
 }
