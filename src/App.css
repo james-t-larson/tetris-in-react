@@ -11,6 +11,11 @@ html {
   align-items: center;
 }
 
+.score {
+  font-size: 50px;
+  color: white;
+}
+
 .grid {
   position: relative;
 }

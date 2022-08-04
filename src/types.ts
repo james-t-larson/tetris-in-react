@@ -1,5 +1,7 @@
 export interface Tetrominos {
-  active: Tetromino; inactive: InactiveTetrominoBlock[]
+  active: Tetromino;
+  inactive: InactiveTetrominoBlock[];
+  score: number;
 }
 
 export interface Tetromino {

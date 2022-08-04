@@ -4,7 +4,8 @@ import { rotateTetromino,
   moveTetromino,
   checkMovementForCollision,
   generateTetromino,
-  clearLine
+  clearLine,
+  clearedLineCount
 } from './utils'
 import './App.css';
 
@@ -13,7 +14,8 @@ function App() {
   const initialState: Tetrominos = (
     {
       active: { ids: ['z0'], type: 'I', color: 'green', rotated: 0},
-      inactive: [{ id: 'z0', color: 'green'}]
+      inactive: [{ id: 'z0', color: 'green'}],
+      score: 0
     }
   )
 
@@ -48,14 +50,20 @@ function App() {
               playing.current = false;
             }
 
+
             const inactiveTetrominoBlocks = [...prev.active.ids].map(id => ({
               id: id,
               color: prev.active.color
             })).concat(prev.inactive)
 
+            const pointCount = clearedLineCount(inactiveTetrominoBlocks) > 0 
+              ? clearedLineCount(inactiveTetrominoBlocks) * 100 + prev.score 
+              : prev.score
+
             return {
               active: nextTetrominio,
-              inactive: clearLine(inactiveTetrominoBlocks)
+              inactive: clearLine(inactiveTetrominoBlocks),
+              score: pointCount
             }
 
           }
@@ -67,7 +75,8 @@ function App() {
               type: prev.active.type,
               rotated: prev.active.rotated
             },
-            inactive: [...prev.inactive]
+            inactive: [...prev.inactive],
+            score: prev.score
           }
 
         })
@@ -84,7 +93,8 @@ function App() {
       if (key === 'up' && !rotationCollision) {
         return {
           active: rotateTetromino(prev.active),
-          inactive: [...prev.inactive]
+          inactive: [...prev.inactive],
+          score: prev.score
         }
       }
       if (['right', 'left', 'down'].includes(key) && !movementCollision) {
@@ -95,7 +105,8 @@ function App() {
             type: prev.active.type,
             rotated: prev.active.rotated 
           },
-          inactive: [...prev.inactive]
+          inactive: [...prev.inactive],
+          score: direction === 'down' ? prev.score + 1 : prev.score
         }
       }
       return prev
@@ -104,6 +115,7 @@ function App() {
 
   return (
     <span className="container" tabIndex={0} onKeyDown={(event) => playerInputHandler(event)} >
+      <div className="score">{tetrominos.score}</div>
       <div className="grid">
       <img className={`${gameLost.current ? 'game-over' : 'game-playing'}`} alt="" src="/game-over.svg"></img>
       {grid.map((row, index) => <div id={String.fromCharCode(index + 65)} className="row">{

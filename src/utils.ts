@@ -41,7 +41,7 @@ export const moveInactiveBlocks = (blocks: InactiveTetrominoBlock[], completeRow
   return movedBlocks
 }
 
-export const clearLine = (blocks: InactiveTetrominoBlock[]): InactiveTetrominoBlock[] => {
+export const clearedLineCount = (blocks: InactiveTetrominoBlock[]) => {
   let rowCounts: {[key: string]: number} = {}
   blocks.forEach(block => {
     const row = block.id[0]
@@ -52,10 +52,23 @@ export const clearLine = (blocks: InactiveTetrominoBlock[]): InactiveTetrominoBl
       }
   })
 
-  // var map = arr.reduce(function(prev, cur) {
-  // prev[cur] = (prev[cur] || 0) + 1;
-  // return prev;
-// }, {});
+  const filledRows: TetrominoType[] = Object.entries(rowCounts).filter(([key,value]) => {
+    return value > 9
+  }).map(row => row[0] as TetrominoType)
+
+  return filledRows.length
+}
+
+export const clearLine = (blocks: InactiveTetrominoBlock[]): InactiveTetrominoBlock[] => {
+  let rowCounts: {[key: string]: number} = {}
+  blocks.forEach(block => {
+    const row = block.id[0]
+      if (rowCounts[row]) {
+        rowCounts[row] += 1
+      } else {
+        rowCounts[row] = 1
+      }
+  })
 
   const filteredBlocks = blocks.filter(block => rowCounts[block.id[0]] < 10)
   const filledRows: TetrominoType[] = Object.entries(rowCounts).filter(([key,value]) => {
