@@ -20,20 +20,25 @@ export const moveTetromino = (ids: string[], direction: Movement): string[] => {
 }
 
 export const moveInactiveBlocks = (blocks: InactiveTetrominoBlock[], completeRows: TetrominoType[]): InactiveTetrominoBlock[] => {
-  const completeRowsAsInts = completeRows.map(row => row.charCodeAt(0))
-  return blocks.map(({ id, color })=> {
-      if (completeRowsAsInts.includes(id[0].charCodeAt(0) + 1)) {
-        return {
-          id: moveBlock(id, 'down'),
-          color: color
+  const completeRowsAsNums = completeRows.map(row => row.charCodeAt(0)).sort()
+  let movedBlocks: InactiveTetrominoBlock[] = blocks
+
+  completeRowsAsNums.forEach(row => {
+    movedBlocks = movedBlocks.map(({ id, color })=> {
+        if (row >= id[0].charCodeAt(0) + 1) {
+          return {
+            id: moveBlock(id, 'down'),
+            color: color
+          }
+        } else {
+          return {
+            id: id,
+            color: color
+          }
         }
-      } else {
-        return {
-          id: id,
-          color: color
-        }
-      }
+    })
   })
+  return movedBlocks
 }
 
 export const clearLine = (blocks: InactiveTetrominoBlock[]): InactiveTetrominoBlock[] => {
@@ -46,6 +51,11 @@ export const clearLine = (blocks: InactiveTetrominoBlock[]): InactiveTetrominoBl
         rowCounts[row] = 1
       }
   })
+
+  // var map = arr.reduce(function(prev, cur) {
+  // prev[cur] = (prev[cur] || 0) + 1;
+  // return prev;
+// }, {});
 
   const filteredBlocks = blocks.filter(block => rowCounts[block.id[0]] < 10)
   const filledRows: TetrominoType[] = Object.entries(rowCounts).filter(([key,value]) => {
