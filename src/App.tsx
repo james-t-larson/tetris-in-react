@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
-import { Tetrominos, Movement } from './types'
+import { Tetrominos, Movement, Tetromino } from './types'
 import { rotateTetromino,
   moveTetromino,
   checkMovementForCollision,
@@ -7,7 +7,6 @@ import { rotateTetromino,
   clearLine
 } from './utils'
 import './App.css';
-import Lockr from 'lockr'
 
 function App() {
 
@@ -20,6 +19,7 @@ function App() {
 
   const [tetrominos, setTetrominos] = useState<Tetrominos>(initialState)
   const playing = useRef(false)
+  const gameLost = useRef(false)
 
   const grid = useMemo(() => {
     const row = [[],[],[],[],[],[],[],[],[],[]];
@@ -36,19 +36,30 @@ function App() {
   }, [])
 
   useEffect(() => {
-      let loop = setInterval(() => {
+      const loop = setInterval(() => {
         if (!playing.current) return null
         setTetrominos(prev => {
+          const nextTetrominio: Tetromino = generateTetromino()
+
           if (checkMovementForCollision(prev , moveTetromino(prev.active.ids, 'down')) || prev.active.ids[0] === 'z0') {
+
+            if (checkMovementForCollision(prev, nextTetrominio.ids)) {
+              gameLost.current = true;
+              playing.current = false;
+            }
+
             const inactiveTetrominoBlocks = [...prev.active.ids].map(id => ({
               id: id,
               color: prev.active.color
             })).concat(prev.inactive)
+
             return {
-              active: generateTetromino(),
+              active: nextTetrominio,
               inactive: clearLine(inactiveTetrominoBlocks)
             }
+
           }
+
           return {
             active: {
               ids: moveTetromino(prev.active.ids, 'down'),
@@ -58,6 +69,7 @@ function App() {
             },
             inactive: [...prev.inactive]
           }
+
         })
       }, 500)
     return () => clearTimeout(loop)
@@ -91,27 +103,47 @@ function App() {
   }
 
   return (
-    <span className="grid" tabIndex={0} onKeyDown={(event) => playerInputHandler(event)} >
-      <div>
+    <span className="container" tabIndex={0} onKeyDown={(event) => playerInputHandler(event)} >
+      <div className="grid">
+      <img className={`${gameLost.current ? 'game-over' : 'game-playing'}`} alt="" src="/game-over.svg"></img>
       {grid.map((row, index) => <div id={String.fromCharCode(index + 65)} className="row">{
         row.map(block => {
-          return <div id={block.id} className={
-             `
-              block
-              ${!!tetrominos.active.ids.includes(block.id) ? `${tetrominos.active.color} active-block` : ''}
-              ${(() => {
-                const foundBlock = tetrominos.inactive.find(tetroBlocks => tetroBlocks.id === block.id)
-                return !!foundBlock?.color ? `${foundBlock?.color} active-block` : ''
-              })()}
-              ${block.color}
-              `
-            }>
-          </div>
+          const activeBlockColor = tetrominos.inactive.find(tetroBlocks => tetroBlocks.id === block.id)?.color || ''
+          const inactiveBlockColor = tetrominos.active.ids.includes(block.id) ? tetrominos.active.color : ''
+          return (
+            <div 
+              id={block.id} 
+              className={
+                `
+                  block
+                  ${activeBlockColor}
+                  ${inactiveBlockColor}
+                  ${block.color}
+                `
+              }>
+            </div>
+          )
         })
       }</div>)}
       </div>
-      <button onClick={(() => { playing.current = !playing.current; setTetrominos(initialState) })}>{playing.current ? 'Stop' : 'Start'}</button>
-      <button onClick={(() => setTetrominos(initialState))}>Restart</button>
+      <div className="buttons">
+        <button 
+          onClick={(() => { playing.current = !playing.current })} 
+          className="button"
+          disabled={gameLost.current}
+        >
+          {playing.current ? 'Pause' : 'Start'}
+        </button>
+        <button 
+          onClick={(() => {
+            setTetrominos(initialState)
+            gameLost.current = false
+          })}
+          className="button"
+        >
+          Restart
+        </button>
+      </div>
     </span>
   );
 }

@@ -65,21 +65,21 @@ export const checkMovementForCollision = (tetrominos: Tetrominos, futurePosition
 }
 
 const movementsFromType: { [key: string]: Movement[] } = {
-  'I': ['left', 'left', 'left'],
-  'J': ['left', 'down', 'down'],
-  'L': ['right', 'down', 'down'],
+  'I': ['right', 'left', 'left', 'left'],
+  'J': ['left','right', 'right', 'down'],
+  'L': ['right', 'left', 'left', 'down'],
   'O': ['right', 'down', 'left'],
-  'S': ['left', 'down', 'left'],
-  'T': ['down', 'right', 'left', 'left'],
-  'Z': ['right', 'down', 'right'],
+  'S': ['right', 'left', 'down', 'left'],
+  'T': ['up', 'down', 'right', 'left', 'left'],
+  'Z': ['left', 'right', 'up', 'right'],
 }
 
 const rotateMovements = (movements: Movement[], rotated: RotationCount) => {
     if (rotated === 0) return movements
     const rotatedMovements: { [key: number]: {[key: string]: Movement} } = {
       1: {
-        left: 'down',
-        right: 'up',
+        left: 'up',
+        right: 'down',
         down: 'left',
         up: 'right'
       },
@@ -96,6 +96,7 @@ const rotateMovements = (movements: Movement[], rotated: RotationCount) => {
         up: 'left'
       }
     }
+
     return movements.map((movement: Movement) => rotatedMovements[rotated][movement])
 }
 
@@ -111,20 +112,10 @@ export const rotateTetromino = (tetromino: Tetromino): Tetromino => {
   if (tetromino.type === 'O') return tetromino
   const rotated: RotationCount = (tetromino.rotated < 3 ? tetromino.rotated + 1 : 0) as RotationCount 
 
-  const startingPointFromType : { [key: string]: string} = {
-    'I': tetromino.ids[2],
-    'J': tetromino.ids[2],
-    'L': tetromino.ids[2],
-    'O': tetromino.ids[0],
-    'S': tetromino.ids[2],
-    'T': tetromino.ids[0],
-    'Z': tetromino.ids[2],
-  }
-
   const rotatedMovements = rotateMovements(movementsFromType[tetromino.type], rotated)
 
   return {
-    ids:  generateFromMovements(rotatedMovements, startingPointFromType[tetromino.type]),
+    ids:  generateFromMovements(rotatedMovements, tetromino.ids[0]),
     color: tetromino.color,
     type: tetromino.type,
     rotated: rotated
